@@ -4,7 +4,7 @@ require 'optparse'
 require 'fileutils'
 require 'goodbye_chatwork'
 
-opts = ARGV.getopts('i:p:e:x:d:h')
+opts = ARGV.getopts('i:p:e:x:d:h:a:t')
 email = opts['i']
 password = opts['p']
 
@@ -16,6 +16,8 @@ Usage: goodbye_chatwork
     -e room id (export chat logs)
     -x room id (export chat logs and download attachment files)
     -d dir
+    -a all
+    -t test
 
 Example:
 show room list
@@ -33,15 +35,16 @@ export logs (-x: chat logs and attachment files)
   exit
 end
 
-gcw = GoodbyeChatwork::Client.new(email, password, verbose: true)
-gcw.login
-list = gcw.room_list
-if opts['x'] || opts['e']
+def saveFile(gcw, list)
+  if opt['a']
+    isGetAll = true;
+  end
   log_dir = opts['d'] || 'chatwork_logs'
   unless File.exists?(log_dir)
     gcw.info "mkdir #{log_dir}"
     FileUtils.mkdir_p log_dir
   end
+  #loop start
   room_id = opts['x'] || opts['e']
   room = list.find { |i| i[0] == room_id.to_s }
   unless room
@@ -56,6 +59,18 @@ if opts['x'] || opts['e']
   else
     gcw.export_csv(room_id, out)
   end
+end
+
+gcw = GoodbyeChatwork::Client.new(email, password, verbose: true)
+gcw.login
+list = gcw.room_list
+if opts['t']
+  print "test debug"
+  puts gcw.rooms
 else
-  puts list.map { |i| i.join(' ') }
+  if opts['x'] || opts['e']
+    saveFile(gcw, list)
+  else
+    puts list.map { |i| i.join(' ') }
+  end
 end
